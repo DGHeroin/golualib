@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Sample of websocket with golang</title>
+    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+    <script>
+        $(function() {
+            var ws = new WebSocket('ws://127.0.0.1/ws');
+            var timerID = 0;
+            function keepAlive() {
+                var timeout = 1000;
+                if (ws.readyState == ws.OPEN) {
+                    ws.send('hello');
+                }
+                timerId = setTimeout(keepAlive, timeout);
+            }
+            function cancelKeepAlive() {
+                if (timerId) {
+                    clearTimeout(timerId);
+                }
+            }
+
+            ws.onopen = function(e) {
+                keepAlive();
+                $('<li>').text("connected").appendTo($ul);
+            }
+
+            ws.onmessage = function(e) {
+                $('<li>').text(event.data).appendTo($ul);
+            };
+            ws.onclose = function(e) {
+                $('<li>').text("closed").appendTo($ul);
+            };
+            var $ul = $('#msg-list');
+        });
+    </script>
+</head>
+
+<body>
+<ul id="msg-list"></ul>
+</body>
+
+</html>
