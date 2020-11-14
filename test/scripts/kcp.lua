@@ -6,6 +6,7 @@ function server.onEvent(eventType, id, client, msgType, msgData)
     if eventType == 1 then
         server.SetTimeout(client, 5)
         server.SetHead(client, true)
+        return
     end
     server.Send(client, 1, 'world')
     -- if not x[id] then

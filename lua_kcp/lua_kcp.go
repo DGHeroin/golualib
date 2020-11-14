@@ -285,6 +285,11 @@ func handlerFunc(h *kcpHandler, conn net.Conn) {
                     data = client.sendList.Remove(client.sendList.Front()).([]byte)
                 }
                 client.sendMutex.Unlock()
+                if client.withHead {
+                    header := make([]byte, 4)
+                    binary.BigEndian.PutUint32(header, uint32(len(data)))
+                    data = append(header, data...)
+                }
                 if client.timeout != 0 {
                     _ = conn.SetWriteDeadline(time.Now().Add(client.timeout))
                 }
