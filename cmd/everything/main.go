@@ -3,6 +3,7 @@ package main
 import (
     "log"
 
+    "github.com/DGHeroin/golualib/lua_jsonrpc"
     "github.com/DGHeroin/golualib/lua_kcp"
     "github.com/DGHeroin/golualib/lua_looper"
     "github.com/DGHeroin/golualib/lua_time"
@@ -23,6 +24,7 @@ func main() {
     lua_time.Register(L)
     lua_websocket.Register(L)
     lua_kcp.Register(L)
+    lua_jsonrpc.Register(L)
     if len(os.Args) == 2 {
         if fi, err := os.Stat(os.Args[1]); err == nil && !fi.IsDir() {
             if err := L.DoFile(os.Args[1]); err != nil {
