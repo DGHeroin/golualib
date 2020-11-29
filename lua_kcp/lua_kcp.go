@@ -112,6 +112,9 @@ func listenServer(L *lua.State) int {
 
     go func() {
         defer func() {
+            if e := recover(); e != nil {
+                log.Println(e)
+            }
             L.Unref(lua.LUA_REGISTRYINDEX, ref)
         }()
         ln, err := kcp.Listen(addr)
