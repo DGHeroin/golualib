@@ -35,9 +35,11 @@ type luaContext struct {
     L     *lua.State
 }
 
-func NewDefaultContext() LuaContext {
+func NewDefaultContext(L *lua.State) LuaContext {
     ctx := &luaContext{}
-    L := lua.NewState()
+    if L == nil {
+        L = lua.NewState()
+    }
     ctx.L = L
     L.OpenLibs()
     L.OpenGoLibs()
