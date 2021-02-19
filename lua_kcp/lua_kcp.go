@@ -27,7 +27,7 @@ lua_http = nil
 function KCPServer()
     local self = {}
     local handler
-
+    local timeout
     local function onEvent( evtType, id, client, msgData )
         if self.onEvent then
             self.onEvent(evtType, id, client, msgData)
@@ -36,6 +36,7 @@ function KCPServer()
 
     function self.Init(addr)
         handler = lib.listen( addr, onEvent )
+        if timeout then lib.setTimeout(handler, timeout) end
     end
 
     function self.Close(client)
@@ -52,8 +53,12 @@ function KCPServer()
         lib.setHead(client, b)
     end
 
-    function self.SetTimeout(client, sec)
-        lib.setTimeout(client, sec)
+    function self.SetTimeout(sec)
+        if handler then
+            lib.setTimeout(handler, sec)
+        else
+            timeout = sec
+        end
     end
 
     return self
@@ -102,6 +107,7 @@ type kcpHandler struct {
     id        uint32
     waitGroup *sync.WaitGroup
     exitChan  chan struct{}
+    timeout   time.Duration
 }
 
 func listenServer(L *lua.State) int {
@@ -115,6 +121,7 @@ func listenServer(L *lua.State) int {
         ref:       ref,
         waitGroup: &sync.WaitGroup{},
         exitChan:  make(chan struct{}),
+        timeout:   time.Second * 10,
     }
 
     go func() {
@@ -153,7 +160,9 @@ func handlerFunc(h *kcpHandler, conn net.Conn) {
         packetReceiveChan: make(chan []byte, 10),
         packetSendChan:    make(chan []byte, 10),
         withHead:          true,
+        timeout:           h.timeout,
     }
+    log.Println("timeout", c.timeout)
     c.SetCallback(h)
 
     go func() { // read message
@@ -221,8 +230,8 @@ func setHead(L *lua.State) int {
 func setTimeout(L *lua.State) int {
     p := L.ToGoStruct(1)
     sec := L.ToNumber(2)
-    if client, ok := p.(*Conn); ok {
-        client.timeout = time.Duration(sec * float64(time.Second))
+    if h, ok := p.(*kcpHandler); ok {
+        h.timeout = time.Duration(sec * float64(time.Second))
     } else {
         L.PushString("convert error")
         return 1

@@ -20,6 +20,7 @@ func (c *kcpHandler) OnConnect(conn *Conn) bool {
         L.PushInteger(int64(id))
         L.PushGoStruct(conn)
         if err := L.Call(3, 0); err != nil {
+            log.Println(err)
             rs = false
         }
         wgAccept.Done()
@@ -64,4 +65,8 @@ func (c *kcpHandler) OnClose(conn *Conn) {
             log.Println(err)
         }
     })
+}
+
+func (c *kcpHandler) OnError(conn *Conn, err error) {
+    //log.Println(conn, err)
 }

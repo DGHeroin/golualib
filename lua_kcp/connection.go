@@ -11,11 +11,10 @@ import (
 )
 
 type Conn struct {
-    conn     net.Conn
-    id       uint32
-    withHead bool
-    timeout  time.Duration
-
+    conn              net.Conn
+    id                uint32
+    withHead          bool
+    timeout           time.Duration
     srv               *kcpHandler
     closeChan         chan struct{}
     packetReceiveChan chan []byte
@@ -24,12 +23,14 @@ type Conn struct {
     closeOnce         sync.Once
     openFlag          int32
     callback          ConnCallback
+    err               error
 }
 
 type ConnCallback interface {
     OnConnect(conn *Conn) bool
     OnMessage(conn *Conn, pkt []byte) bool
     OnClose(conn *Conn)
+    OnError(conn *Conn, err error)
 }
 
 func (c *Conn) Close() {
@@ -65,6 +66,7 @@ func (c *Conn) ReadMessage() ([]byte, error) {
         buf = make([]byte, 4)
         n, err = io.ReadFull(conn, buf)
         if err != nil {
+            c.setErr(err)
             return nil, err
         }
         data = buf[:n]
@@ -72,6 +74,7 @@ func (c *Conn) ReadMessage() ([]byte, error) {
         buf = make([]byte, size)
         n, err = io.ReadFull(conn, buf)
         if err != nil {
+            c.setErr(err)
             return nil, err
         }
         data = buf[:n]
@@ -79,6 +82,7 @@ func (c *Conn) ReadMessage() ([]byte, error) {
         buf = make([]byte, 4096)
         n, err = conn.Read(buf)
         if err != nil {
+            c.setErr(err)
             return nil, err
         }
         data = buf[:n]
@@ -96,7 +100,8 @@ func (c *Conn) WriteMessage(data []byte) {
         _ = c.conn.SetWriteDeadline(time.Now().Add(c.timeout))
     }
     if _, err := c.conn.Write(data); err != nil {
-        _ = c.conn.Close()
+        c.setErr(err)
+        c.Close()
         return
     }
 }
@@ -116,6 +121,7 @@ func (c *Conn) readLoop() {
         default:
             data, err := c.ReadMessage()
             if err != nil {
+                c.setErr(err)
                 return
             }
             c.packetReceiveChan <- data
@@ -158,4 +164,9 @@ func asyncDo(fn func(), wg *sync.WaitGroup) {
 }
 func (c *Conn) SetCallback(callback ConnCallback) {
     c.callback = callback
+}
+
+func (c *Conn) setErr(err error) {
+    c.callback.OnError(c, err)
+    c.err = err
 }
