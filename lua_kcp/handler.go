@@ -2,7 +2,6 @@ package lua_kcp
 
 import (
     "github.com/DGHeroin/golua/lua"
-    "log"
     "sync"
 )
 
@@ -20,7 +19,7 @@ func (c *kcpHandler) OnConnect(conn *Conn) bool {
         L.PushInteger(int64(id))
         L.PushGoStruct(conn)
         if err := L.Call(3, 0); err != nil {
-            log.Println(err)
+            c.OnError(conn, err)
             rs = false
         }
         wgAccept.Done()
@@ -45,7 +44,7 @@ func (c *kcpHandler) OnMessage(conn *Conn, data []byte) bool {
         }
 
         if err := L.Call(4, 0); err != nil {
-            log.Println(err)
+            c.OnError(conn, err)
         }
     })
     return true
@@ -62,7 +61,7 @@ func (c *kcpHandler) OnClose(conn *Conn) {
         L.PushInteger(int64(id))
         L.PushGoStruct(conn)
         if err := L.Call(3, 0); err != nil {
-            log.Println(err)
+            c.OnError(conn, err)
         }
     })
 }
