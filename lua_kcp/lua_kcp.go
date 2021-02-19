@@ -162,7 +162,6 @@ func handlerFunc(h *kcpHandler, conn net.Conn) {
         withHead:          true,
         timeout:           h.timeout,
     }
-    log.Println("timeout", c.timeout)
     c.SetCallback(h)
 
     go func() { // read message
