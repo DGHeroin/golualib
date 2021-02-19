@@ -17,7 +17,7 @@ import (
 
 func main() {
     log.SetFlags(log.LstdFlags | log.Lshortfile)
-    ctx := NewDefaultContext()
+    ctx := NewDefaultContext(nil)
     L := ctx.LuaState()
     lua_http.Register(L)
     lua_looper.Register(L)

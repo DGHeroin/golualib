@@ -42,8 +42,14 @@ end
 function LuaLoop()
     local self = {}
     local loop
-    function self.Start(ms, cb)
-        loop = l.New(ms, cb, LoopTimeCounter)
+    local updateList = {}
+    local function onUpdate()
+        for _, cb in pairs(updateList) do
+            cb()
+        end
+    end
+    function self.Start(ms)
+        loop = l.New(ms, onUpdate, LoopTimeCounter)
     end
     function self.Stop()
         if loop then
@@ -53,6 +59,12 @@ function LuaLoop()
     end
     function self.AfterFunc(sec, cb)
         l.AfterFunc(sec, cb)
+    end
+    function self.AddUpdate(cb)
+        updateList[cb] = cb
+    end
+    function self.RemoveUpdate(cb)
+        updateList[cb] = nil
     end
     return self
 end
