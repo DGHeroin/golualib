@@ -169,9 +169,9 @@ func handlerFunc(h *kcpHandler, conn net.Conn) {
                 if atomic.CompareAndSwapInt32(&c.openFlag, 0, 1) {
                     h.OnConnect(c)
                     h.OnMessage(c, data)
-                    return
+                } else {
+                    h.OnMessage(c, data)
                 }
-                h.OnMessage(c, data)
             }
         }
     }()

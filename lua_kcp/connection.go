@@ -39,7 +39,7 @@ func (c *Conn) Close() {
         close(c.closeChan)
         close(c.packetReceiveChan)
         close(c.packetSendChan)
-        c.conn.Close()
+        _ = c.conn.Close()
         c.callback.OnClose(c)
     })
 }
@@ -99,6 +99,7 @@ func (c *Conn) WriteMessage(data []byte) {
     if c.timeout != 0 {
         _ = c.conn.SetWriteDeadline(time.Now().Add(c.timeout))
     }
+
     if _, err := c.conn.Write(data); err != nil {
         c.setErr(err)
         c.Close()
@@ -145,7 +146,7 @@ func (c *Conn) writeLoop() {
             if c.IsClosed() {
                 return
             }
-            c.conn.SetWriteDeadline(time.Now().Add(c.timeout))
+            _ = c.conn.SetWriteDeadline(time.Now().Add(c.timeout))
             c.WriteMessage(data)
         }
     }

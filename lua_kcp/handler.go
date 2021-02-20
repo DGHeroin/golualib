@@ -2,6 +2,10 @@ package lua_kcp
 
 import (
     "github.com/DGHeroin/golua/lua"
+    "io"
+    "log"
+    "net"
+    "strings"
     "sync"
 )
 
@@ -67,5 +71,20 @@ func (c *kcpHandler) OnClose(conn *Conn) {
 }
 
 func (c *kcpHandler) OnError(conn *Conn, err error) {
-    //log.Println(conn, err)
+    switch err {
+    case io.EOF, io.ErrClosedPipe, io.ErrUnexpectedEOF:
+        return
+    }
+    switch e := err.(type) {
+    case net.Error:
+        if e.Timeout() {
+            // is timeout
+        }
+        return
+    }
+
+    if strings.Contains(err.Error(), "timeout") {
+        return
+    }
+    log.Println(conn.id, err)
 }
