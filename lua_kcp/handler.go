@@ -86,5 +86,8 @@ func (c *kcpHandler) OnError(conn *Conn, err error) {
     if strings.Contains(err.Error(), "timeout") {
         return
     }
+    if strings.Contains(err.Error(), "io: read/write on closed pipe") {
+        return
+    }
     log.Println(conn.id, err)
 }
