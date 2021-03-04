@@ -141,42 +141,43 @@ func get(L *lua.State) int {
         L.Unref(lua.LUA_REGISTRYINDEX, ref)
         return 1
     }
+    go func() {
 
-    cmd := cli.Get(context.Background(), key)
-    if cmd.Err() != nil { // 发生错误
-        ctx.Run(func() {
-            L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
+        cmd := cli.Get(context.Background(), key)
+        if cmd.Err() != nil { // 发生错误
+            ctx.Run(func() {
+                L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
 
-            L.PushString(cmd.Err().Error())
-            if err := L.Call(1, 0); err != nil {
-                log.Println(err)
-            }
-            L.Unref(lua.LUA_REGISTRYINDEX, ref)
-        })
-    } else {
-        ctx.Run(func() {
-            data, err := cmd.Bytes()
-            L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
+                L.PushString(cmd.Err().Error())
+                if err := L.Call(1, 0); err != nil {
+                    log.Println(err)
+                }
+                L.Unref(lua.LUA_REGISTRYINDEX, ref)
+            })
+        } else {
+            ctx.Run(func() {
+                data, err := cmd.Bytes()
+                L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
 
-            if err != nil {
-                L.PushString(err.Error())
-                L.PushNil()
-            } else {
-                L.PushNil()
-                if data == nil || len(data) == 0 {
+                if err != nil {
+                    L.PushString(err.Error())
                     L.PushNil()
                 } else {
-                    L.PushBytes(data)
+                    L.PushNil()
+                    if data == nil || len(data) == 0 {
+                        L.PushNil()
+                    } else {
+                        L.PushBytes(data)
+                    }
                 }
-            }
 
-            if err := L.Call(2, 0); err != nil {
-                log.Println(err)
-            }
-            L.Unref(lua.LUA_REGISTRYINDEX, ref)
-        })
-    }
-
+                if err := L.Call(2, 0); err != nil {
+                    log.Println(err)
+                }
+                L.Unref(lua.LUA_REGISTRYINDEX, ref)
+            })
+        }
+    }()
     return 0
 }
 
@@ -207,29 +208,29 @@ func set(L *lua.State) int {
             log.Println(e)
         }
     }()
-    cmd := cli.Set(context.Background(), key, val, 0)
+    go func() {
+        cmd := cli.Set(context.Background(), key, val, 0)
+        if cmd.Err() != nil {
+            ctx.Run(func() {
+                L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
+                L.PushString(cmd.Err().Error())
+                if err := L.Call(1, 0); err != nil {
+                    log.Println(err)
+                }
+                L.Unref(lua.LUA_REGISTRYINDEX, ref)
+            })
+            return
+        }
 
-    if cmd.Err() != nil {
         ctx.Run(func() {
             L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
-            L.PushString(cmd.Err().Error())
-            if err := L.Call(1, 0); err != nil {
+            L.PushNil()
+            L.PushString(cmd.String())
+            if err := L.Call(2, 0); err != nil {
                 log.Println(err)
             }
             L.Unref(lua.LUA_REGISTRYINDEX, ref)
         })
-        return 0
-    }
-
-    ctx.Run(func() {
-        L.RawGeti(lua.LUA_REGISTRYINDEX, ref)
-        L.PushNil()
-        L.PushString(cmd.String())
-        if err := L.Call(2, 0); err != nil {
-            log.Println(err)
-        }
-        L.Unref(lua.LUA_REGISTRYINDEX, ref)
-    })
-
+    }()
     return 0
 }

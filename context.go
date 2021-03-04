@@ -88,8 +88,9 @@ func (ctx *luaContext) WaitQuit() {
     go func() {
         for {
             log.Println("co num: ", atomic.LoadInt64(&co))
-            time.Sleep(time.Second)
+            time.Sleep(time.Second*10)
             runtime.GC()
+            debug.FreeOSMemory()
         }
     }()
     sig := <-c
